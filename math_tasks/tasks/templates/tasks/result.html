@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block title %}Результат{% endblock %}
+
+{% block content %}
+    <h1>Результаты</h1>
+    <h2>Пользователь: {{ user }}</h2>
+    <h2>Лучшая оценка: {{ score }}</h2>
+    <p>Все попытки: {{ attempts|join:", " }}</p>
+
+    <p>
+        <a href="data:text/plain;charset=utf-8,{{ log_data }}" download="{{ log_filename }}" class="btn btn-secondary">
+            Скачать лог
+        </a>
+    </p>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="comment">Комментарий:</label>
+            <textarea class="form-control" id="comment" name="comment" rows="3"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Отправить комментарий</button>
+    </form>
+
+    {% if attempt_number <= 3 %}
+        <form method="post" action="{% url 'main' %}">
+            {% csrf_token %}
+            <input type="hidden" name="user" value="{{ user }}">
+            <button type="submit" class="btn btn-primary">Попробовать снова ({{ attempt_number }}/3)</button>
+        </form>
+    {% else %}
+        <p>Все попытки пройдены!</p>
+        <a href="{% url 'main' %}" class="btn btn-secondary">Начать новую игру</a>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block title %}Решите задания{% endblock %}
+
+{% block content %}
+    <h1>Арифметические задания</h1>
+    <h2>Пользователь: {{ user }}</h2>
+    <h2>Прогон №{{ attempt_number }}/3</h2>
+
+    <form method="post" action="{% url 'quiz' %}">
+        {% csrf_token %}
+
+        {% for block in display_data %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    Уровень {{ block.level }}
+                </div>
+                <div class="card-body">
+                    {% for row in block.rows %}
+                        <div class="form-group">
+                            <label for="answer_{{ block.level }}_{{ row.index }}">
+                                {{ forloop.counter }}. {{ row.a }} {{ row.op }} {{ row.b }} =
+                            </label>
+                            <input type="number" step="any" class="form-control" id="answer_{{ block.level }}_{{ row.index }}" name="answer_{{ block.level }}_{{ row.index }}" required>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endfor %}
+
+        <button type="submit" class="btn btn-primary">Проверить</button>
+    </form>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block title %}Arithmetic Operations{% endblock %}
+
+{% block content %}
+    <h1>Arithmetic Operations</h1>
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="user">Введите ФИО:</label>
+            <input type="text" id="user" name="user" class="form-control" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Начать</button>
+    </form>
+{% endblock %}
