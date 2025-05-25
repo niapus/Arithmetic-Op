@@ -1,11 +1,11 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
-from .models import Number
+from .models import Number, Attempt
 import random
 from typing import List, Tuple
 from pathlib import Path
 from datetime import datetime
-
+from django.contrib import messages
 
 def format_value(val: float):
     return f"{val:.5f}".rstrip('0').rstrip('.') if val % 1 else str(int(val))
@@ -68,8 +68,12 @@ def start_view(request):
     if request.method == 'POST':
         user = request.POST.get('user')
         request.session['user'] = user
-        request.session['attempts'] = []
-        request.session['attempt_number'] = 1
+
+        previous_attempts = Attempt.objects.filter(user_name=user).count()
+        if previous_attempts >=3:
+            messages.error(request, "Вы исчерпали лимит попыток (3 из 3)")
+            return redirect('main')
+        request.session['attempt_number'] = previous_attempts + 1
 
         levels, operations_map, display_data, correct_answers = generate_data()
 
@@ -174,6 +178,10 @@ def quiz_view(request):
                 correct += int(ok)
 
         score = int(correct >= 1)
+        Attempt.objects.create(
+            user_name=user,
+            score=score
+        )
         log.append(f"\nИтоговая оценка: {score}")
         log.append("===" * 20)
 
@@ -196,12 +204,16 @@ def quiz_view(request):
 
 
 def result_view(request):
-    attempts = request.session.get('attempts', [])
-    best_score = max(attempts) if attempts else 0
     user = request.session.get('user')
-    attempt_number = request.session.get('attempt_number', 1)
-    log_data = request.session.get('log_data', '')
+    user_attempts = Attempt.objects.filter(user_name=user)
+    attempts = []
+    attempt_number = 1
+    if user_attempts:
+        attempts = [a.score for a in user_attempts]
+        attempt_number = user_attempts.count() + 1
+    best_score = max(attempts, default=0)
 
+    log_data = request.session.get('log_data', '')
     graph_edges = request.session.get('graph_edges', [])
     op_nodes = request.session.get('op_nodes', [])
     node_labels = request.session.get('node_labels', {})
@@ -213,6 +225,8 @@ def result_view(request):
         request.session['log_data'] = log_data
 
     log_filename = generate_log_filename(user, attempt_number)
+    with open(log_filename, 'w', encoding='utf-8') as log_file:
+        log_file.write(request.session['log_data'])
 
     return render(request, 'tasks/result.html', {
         'score': best_score,

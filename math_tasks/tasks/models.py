@@ -69,3 +69,12 @@ class Number(models.Model):
         fractional_digits = Number.decimal_to_fractional_digits(self.base, fractional_value, 5)
         fractional_str = ''.join(map(str, fractional_digits)).rstrip('0')
         return f"[{sign}{integer_digits}.{fractional_str}] (осн. {self.base})"
+
+
+class Attempt(models.Model):
+    user_name = models.CharField(max_length=100)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    score = models.IntegerField()
+
+    def __str__(self):
+        return f"{self.user_name} — попытка от {self.timestamp} с оценкой {self.score}"
