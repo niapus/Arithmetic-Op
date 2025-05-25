@@ -21,10 +21,10 @@ venv\Scripts\activate <br />
 python3 -m venv venv <br />
 source venv/bin/activate <br />
 
-**2. Установить зависимости**
-pip install django (если не установлен джанго)
-pip install -r requirements.txt
+**2. Установить зависимости** <br />
+pip install django (если не установлен джанго) <br />
+pip install -r requirements.txt <br />
 
-**3.Запустить проект, после чего открыть его в браузере локально**
+**3.Запустить проект, после чего открыть его в браузере локально** <br />
 python manage.py runserver
 
