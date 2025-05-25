@@ -25,6 +25,6 @@ source venv/bin/activate <br />
 pip install django (если не установлен джанго) <br />
 pip install -r requirements.txt <br />
 
-**3.Запустить проект, после чего открыть его в браузере локально** <br />
+**3.Запустить проект локально, после чего открыть его в браузере** <br />
 python manage.py runserver
 
