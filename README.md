@@ -6,20 +6,20 @@
 5. На прохождение дается 3 попытки, засчитывается лучшая, результаты попыток хранятся в базе данных
 6. Попытка считается успешной (1), если все ответы верны, в противном случае - 0
 
-=== Локальный запуск ===
+=== Локальный запуск ===__
 
 **1.Склонировать репозиторий**
 git clone https://github.com/niapus/Arithmetic-Op.git
 cd Arithmetic-Op/math_tasks
 
 **1.1. Опционально подготовить виртуальное окружение**
-В Windows:
-python3 -m venv venv
-venv\Scripts\activate
+В Windows:__
+python3 -m venv venv__
+venv\Scripts\activate__
 
-В Debian:
-python3 -m venv venv
-source venv/bin/activate
+В Debian:__
+python3 -m venv venv__
+source venv/bin/activate__
 
 **2. Установить зависимости**
 pip install django (если не установлен джанго)
