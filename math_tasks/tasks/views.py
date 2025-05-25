@@ -161,7 +161,7 @@ def quiz_view(request):
                 b = current[b_idx]
                 res_val = format_value(apply_operation(op, a.value, b.value))
                 log.append(
-                    f"y({lvl},{i}) = y({lvl - 1},{a_idx}) {op} y({lvl - 1},{b_idx}) = {a.value} {op} {b.value} = {res_val} → {a} {op} {b}"
+                    f"y({lvl},{i}) = y({lvl - 1},{a_idx}) {op} y({lvl - 1},{b_idx}) = {a} {op} {b} → {a.value} {op} {b.value} = {res_val}"
                 )
 
         log.append("\n=== Проверка ответов ===")
