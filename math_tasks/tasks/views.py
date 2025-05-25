@@ -5,10 +5,11 @@ import random
 from typing import List, Tuple
 from pathlib import Path
 from datetime import datetime
-import re
+
 
 def format_value(val: float):
     return f"{val:.5f}".rstrip('0').rstrip('.') if val % 1 else str(int(val))
+
 
 def apply_operation(op, a, b):
     if op == '+':
@@ -20,6 +21,7 @@ def apply_operation(op, a, b):
     elif op == '/':
         return round(a / b, 5)
     return 0
+
 
 def get_operations(numbers):
     next_level = []
@@ -38,10 +40,29 @@ def get_operations(numbers):
         operations.append((op, i, i + 1))
     return next_level, operations
 
+
+def build_graph_edges(levels, operations_map):
+    edges = []
+    op_nodes = []
+    for lvl, ops in operations_map.items():
+        for i, (op, a_idx, b_idx) in enumerate(ops):
+            from_a = f"L{lvl-1}_{a_idx}"
+            from_b = f"L{lvl-1}_{b_idx}"
+            result = f"L{lvl}_{i}"
+            op_node = f"OP_{lvl}_{i}"
+            op_nodes.append((op_node, op))
+
+            edges.append((from_a, op_node))
+            edges.append((from_b, op_node))
+            edges.append((op_node, result))
+    return edges, op_nodes
+
+
 def generate_log_filename(user: str, num: int):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"{user.replace(' ', '_')}_logs_{num}_{timestamp}.txt"
     return filename
+
 
 def start_view(request):
     if request.method == 'POST':
@@ -53,15 +74,36 @@ def start_view(request):
         levels, operations_map, display_data, correct_answers = generate_data()
 
         request.session['data'] = {
-            'levels': {str(k): [(n.base, n.digits, n.value) for n in v] for k, v in levels.items()},
+            'levels': {str(k): [(n.base, n.digits, n.value, n.negative) for n in v] for k, v in levels.items()},
             'operations_map': {str(k): v for k, v in operations_map.items()},
             'display_data': display_data,
         }
 
         request.session['correct_answers'] = {str(k): v for k, v in correct_answers.items()}
+
+        graph_edges, op_nodes = build_graph_edges(levels, operations_map)
+        node_labels = {}
+        node_levels = {}
+
+        for lvl, nums in levels.items():
+            for i, n in enumerate(nums):
+                node_id = f"L{lvl}_{i}"
+                node_labels[node_id] = str(n)
+                node_levels[f"L{lvl}_{i}"] = lvl
+
+        for op_id, op in op_nodes:
+            node_labels[op_id] = op
+            node_levels[op_id] = int(op_id.split('_')[1])
+
+        request.session['graph_edges'] = graph_edges
+        request.session['op_nodes'] = op_nodes
+        request.session['node_labels'] = node_labels
+        request.session['node_levels'] = node_levels
+
         return redirect('quiz')
 
     return render(request, 'tasks/main.html')
+
 
 def quiz_view(request):
     user = request.session.get('user')
@@ -75,8 +117,8 @@ def quiz_view(request):
     levels = {}
     for k, v in data['levels'].items():
         level_values = []
-        for base, digits, value in v:
-            number = Number(base=base, digits=digits, value=value)
+        for base, digits, value, negative in v:
+            number = Number(base=base, digits=digits, value=value, negative=negative)
             level_values.append(number)
         levels[int(k)] = level_values
 
@@ -95,8 +137,8 @@ def quiz_view(request):
                     user_val = round(user_val, 5)
                 except (ValueError, TypeError):
                     user_val = None
-
                 user_answers[lvl][row['index']] = user_val
+
         log = [f"Прогон №{attempt_number}, пользователь: {user}"]
         log.append("===" * 20)
         log.append(f"Дата и время: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
@@ -109,18 +151,14 @@ def quiz_view(request):
         for lvl in range(1, len(levels)):
             log.append(f"\n=== Уровень {lvl} ===")
             current = levels[lvl - 1]
-
-            if lvl not in operations_map:
-                print(f"Error: Level {lvl} not found in operations_map")
-                continue
-
             operations = get_operations_from_data(operations_map[lvl])
             for i, (op, a_idx, b_idx) in enumerate(operations):
                 a = current[a_idx]
                 b = current[b_idx]
                 res_val = format_value(apply_operation(op, a.value, b.value))
                 log.append(
-                    f"y({lvl},{i}) = y({lvl - 1},{a_idx}) {op} y({lvl - 1},{b_idx}) = {a.value} {op} {b.value} = {res_val} → {a} {op} {b}")
+                    f"y({lvl},{i}) = y({lvl - 1},{a_idx}) {op} y({lvl - 1},{b_idx}) = {a.value} {op} {b.value} = {res_val} → {a} {op} {b}"
+                )
 
         log.append("\n=== Проверка ответов ===")
         correct = 0
@@ -150,8 +188,12 @@ def quiz_view(request):
 
         return redirect('result')
 
-    return render(request, 'tasks/quiz.html',
-                  {'display_data': display_data, 'attempt_number': attempt_number, 'user': user})
+    return render(request, 'tasks/quiz.html', {
+        'display_data': display_data,
+        'attempt_number': attempt_number,
+        'user': user
+    })
+
 
 def result_view(request):
     attempts = request.session.get('attempts', [])
@@ -159,6 +201,11 @@ def result_view(request):
     user = request.session.get('user')
     attempt_number = request.session.get('attempt_number', 1)
     log_data = request.session.get('log_data', '')
+
+    graph_edges = request.session.get('graph_edges', [])
+    op_nodes = request.session.get('op_nodes', [])
+    node_labels = request.session.get('node_labels', {})
+    node_levels = request.session.get('node_levels', {})
 
     if request.method == 'POST':
         comment = request.POST.get('comment', '')
@@ -174,7 +221,12 @@ def result_view(request):
         'user': user,
         'log_data': log_data,
         'log_filename': log_filename,
+        'graph_edges': graph_edges,
+        'op_nodes': op_nodes,
+        'node_labels': node_labels,
+        'node_levels': node_levels,
     })
+
 
 def generate_data():
     levels = {0: [Number.random() for _ in range(random.randint(3, 5))]}
@@ -186,11 +238,8 @@ def generate_data():
     while len(current) > 1:
         next_level, ops = get_operations(current)
         levels[lvl] = next_level
-
         operations_map[lvl] = ops
-        correct_answers[lvl] = [apply_operation(op, current[a].value, current[b].value) for op, a, b in ops]
-        correct_answers[lvl] = [round(x, 5) for x in correct_answers[lvl]]
-
+        correct_answers[lvl] = [round(apply_operation(op, current[a].value, current[b].value), 5) for op, a, b in ops]
         current = next_level
         lvl += 1
 
@@ -209,8 +258,6 @@ def generate_data():
 
     return levels, operations_map, display_data, correct_answers
 
+
 def get_operations_from_data(operations_data):
-    operations = []
-    for op, a_idx, b_idx in operations_data:
-        operations.append((op, a_idx, b_idx))
-    return operations
+    return [(op, a_idx, b_idx) for op, a_idx, b_idx in operations_data]

@@ -33,4 +33,99 @@
         <p>Все попытки пройдены!</p>
         <a href="{% url 'main' %}" class="btn btn-secondary">Начать новую игру</a>
     {% endif %}
+
+    <hr>
+    <h3>Граф связей чисел</h3>
+    <div id="graph" style="height: 600px;"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.css" rel="stylesheet"/>
+
+    <script>
+        const raw_labels = {{ node_labels|safe }};
+        const node_levels = {{ node_levels|safe }};
+        const op_nodes = {{ op_nodes|safe }};
+
+        const nodeSet = new Set();
+        const edgeSet = [];
+
+        {% for from_node, to_node in graph_edges %}
+            nodeSet.add("{{ from_node }}");
+            nodeSet.add("{{ to_node }}");
+            edgeSet.push({
+                from: "{{ from_node }}",
+                to: "{{ to_node }}",
+                arrows: "to"
+            });
+        {% endfor %}
+
+        const levelNodes = {};
+        Array.from(nodeSet).forEach(id => {
+            const lvl = node_levels[id] || (id.startsWith("OP_") ? parseInt(id.split('_')[1]) : 0);
+            if (!(lvl in levelNodes)) levelNodes[lvl] = [];
+            levelNodes[lvl].push(id);
+        });
+
+        const opLabelMap = {};
+        op_nodes.forEach(([id, op]) => {
+            opLabelMap[id] = op;
+        });
+
+        const nodes = [];
+        const spacingY = 250;
+        const spacingX = 70;
+
+        Object.entries(levelNodes).forEach(([lvl, ids]) => {
+            ids.sort();
+            const x = lvl * spacingX;
+            ids.forEach((id, i) => {
+                const y = i * spacingY;
+                let label = raw_labels[id] || id;
+                if (opLabelMap[id]) {
+                    label = opLabelMap[id];
+                }
+                nodes.push({
+                    id: id,
+                    label: label,
+                    x: x,
+                    y: y,
+                    fixed: true,
+                    shape: opLabelMap[id] ? 'ellipse' : 'box',
+                    color: opLabelMap[id] ? '#f0f0f0' : undefined,
+                    font: { size: opLabelMap[id] ? 20 : 16 }
+                });
+            });
+        });
+
+        const data = {
+            nodes: nodes,
+            edges: edgeSet
+        };
+
+        const options = {
+            physics: false,
+            edges: {
+                arrows: 'to',
+                smooth: {
+                    type: "cubicBezier",
+                    forceDirection: "horizontal",
+                    roundness: 0.4
+                }
+            },
+            nodes: {
+                margin: 10,
+                font: { align: 'center' }
+            },
+            layout: {
+                hierarchical: {
+                    direction: "UD",
+                    levelSeparation: spacingX,
+                    nodeSpacing: spacingY,
+                    sortMethod: "directed"
+                }
+            }
+        };
+
+        new vis.Network(document.getElementById("graph"), data, options);
+    </script>
 {% endblock %}
