@@ -15,11 +15,11 @@ cd Arithmetic-Op/math_tasks
 **1.1. Опционально подготовить виртуальное окружение**
 В Windows: <br />
 python3 -m venv venv <br />
-venv\Scripts\activate 
+venv\Scripts\activate <br />
 
-В Debian:
-python3 -m venv venv
-source venv/bin/activate
+В Debian: <br />
+python3 -m venv venv <br />
+source venv/bin/activate <br />
 
 **2. Установить зависимости**
 pip install django (если не установлен джанго)
