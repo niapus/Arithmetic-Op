@@ -7,6 +7,7 @@
 6. Попытка считается успешной (1), если все ответы верны, в противном случае - 0
 
 === Локальный запуск ===
+
 **1.Склонировать репозиторий**
 git clone https://github.com/niapus/Arithmetic-Op.git
 cd Arithmetic-Op/math_tasks
