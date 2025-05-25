@@ -8,11 +8,11 @@
 
 === Локальный запуск === <br />
 
-**1.Склонировать репозиторий**
-git clone https://github.com/niapus/Arithmetic-Op.git
-cd Arithmetic-Op/math_tasks
+**1.Склонировать репозиторий** <br />
+git clone https://github.com/niapus/Arithmetic-Op.git <br />
+cd Arithmetic-Op/math_tasks <br />
 
-**1.1. Опционально подготовить виртуальное окружение**
+**1.1. Опционально подготовить виртуальное окружение** <br />
 В Windows: <br />
 python3 -m venv venv <br />
 venv\Scripts\activate <br />
