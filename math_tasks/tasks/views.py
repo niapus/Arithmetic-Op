@@ -155,6 +155,8 @@ def quiz_view(request):
         for lvl in range(1, len(levels)):
             log.append(f"\n=== Уровень {lvl} ===")
             current = levels[lvl - 1]
+            for k, num in enumerate(levels[lvl]):
+                log.append(f"y({lvl},{k}) = {num}")
             operations = get_operations_from_data(operations_map[lvl])
             for i, (op, a_idx, b_idx) in enumerate(operations):
                 a = current[a_idx]
