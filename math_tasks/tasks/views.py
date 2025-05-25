@@ -89,7 +89,7 @@ def start_view(request):
             for i, n in enumerate(nums):
                 node_id = f"L{lvl}_{i}"
                 node_labels[node_id] = str(n)
-                node_levels[f"L{lvl}_{i}"] = lvl
+                node_levels[node_id] = lvl
 
         for op_id, op in op_nodes:
             node_labels[op_id] = op
